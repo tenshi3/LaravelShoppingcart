@@ -17,6 +17,13 @@ class CartRowCollection extends Collection {
 	 * @var string
 	 */
 	protected $associatedModelNamespace;
+	
+	/**
+	 * Instance of Eloquent Model for Caching
+	 *
+	 * @var null
+	 */
+	protected $associatedModelInstance = null;
 
 	/**
 	 * Constructor for the CartRowCollection
@@ -40,15 +47,26 @@ class CartRowCollection extends Collection {
 			return $this->get($arg);
 		}
 
-		if($arg == strtolower($this->associatedModel))
+		if ($arg == strtolower($this->associatedModel))
 		{
-			$modelInstance = $this->associatedModelNamespace ? $this->associatedModelNamespace . '\\' .$this->associatedModel : $this->associatedModel;
-			$model = new $modelInstance;
-
-			return $model->find($this->id);
+			if (empty($this->associatedModelInstance)) {
+				$modelInstance = $this->associatedModelNamespace ? $this->associatedModelNamespace . '\\' . $this->associatedModel : $this->associatedModel;
+				$this->associatedModelInstance = $modelInstance::find($this->id);
+			}
+			return $this->associatedModelInstance;
 		}
 
 		return null;
+	}
+	
+	public function __isset($arg)
+	{
+		return $this->has($arg) || $arg == strtolower($this->associatedModel);
+	}
+	
+	public function __sleep()
+	{
+		return ['items', 'associatedModel', 'associatedModelNamespace'];
 	}
 
 	public function search($search, $strict = false)
