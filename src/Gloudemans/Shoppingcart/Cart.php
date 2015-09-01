@@ -67,8 +67,8 @@ class Cart
      * Set the current cart instance.
      *
      * @param string $instance Cart instance name
-     *
      * @return Gloudemans\Shoppingcart\Cart
+     * @throws Exceptions\ShoppingcartInstanceException
      */
     public function instance($instance = null)
     {
@@ -85,8 +85,10 @@ class Cart
     /**
      * Set the associated model.
      *
-     * @param string $modelName      The name of the model
+     * @param string $modelName The name of the model
      * @param string $modelNamespace The namespace of the model
+     * @return $this
+     * @throws Exceptions\ShoppingcartUnknownModelException
      */
     public function associate($modelName, $modelNamespace = null)
     {
@@ -158,10 +160,10 @@ class Cart
     /**
      * Update the quantity of one row of the cart.
      *
-     * @param string    $rowId     The rowid of the item you want to update
+     * @param string $rowId The rowid of the item you want to update
      * @param int|array $attribute New quantity of the item|Array of attributes to update
-     *
      * @return bool
+     * @throws Exceptions\ShoppingcartInvalidRowIDException
      */
     public function update($rowId, $attribute)
     {
@@ -196,8 +198,8 @@ class Cart
      * Remove a row from the cart.
      *
      * @param string $rowId The rowid of the item
-     *
      * @return bool
+     * @throws Exceptions\ShoppingcartInvalidRowIDException
      */
     public function remove($rowId)
     {
@@ -209,6 +211,11 @@ class Cart
 
         // Fire the cart.remove event
         $this->event->fire('cart.remove', $rowId);
+
+        $row = $cart->get($rowId);
+        if ($row->getClass()) {
+            unset($cart->preloadModels[$row->getClass()][$rowId]);
+        }
 
         $cart->forget($rowId);
 
@@ -245,11 +252,13 @@ class Cart
             $with = config('cart.with') ?: [];
 
             foreach ($cart->preloadModels as $type => $ids) {
-                $this->cache[$type] = $type::whereIn('id', $ids);
-                if (isset($with[$type])) {
-                    $this->cache[$type]->with($with[$type]);
+                if (count($ids) > 0) {
+                    $this->cache[$type] = $type::whereIn('id', $ids);
+                    if (isset($with[$type])) {
+                        $this->cache[$type]->with($with[$type]);
+                    }
+                    $this->cache[$type]->get();
                 }
-                $this->cache[$type]->get();
             }
         }
 
@@ -346,11 +355,15 @@ class Cart
     /**
      * Add row to the cart.
      *
-     * @param string $id      Unique ID of the item
-     * @param string $name    Name of the item
-     * @param int    $qty     Item qty to add to the cart
-     * @param float  $price   Price of one item
-     * @param array  $options Array of additional options, such as 'size' or 'color'
+     * @param string $id Unique ID of the item
+     * @param string $name Name of the item
+     * @param int $qty Item qty to add to the cart
+     * @param float $price Price of one item
+     * @param array $options Array of additional options, such as 'size' or 'color'
+     * @return
+     * @throws Exceptions\ShoppingcartInvalidItemException
+     * @throws Exceptions\ShoppingcartInvalidPriceException
+     * @throws Exceptions\ShoppingcartInvalidQtyException
      */
     protected function addRow($id, $name, $qty, $price, array $options = [])
     {
@@ -443,9 +456,10 @@ class Cart
      * Update a row if the rowId already exists.
      *
      * @param string $rowId The ID of the row to update
-     * @param int    $qty   The quantity to add to the row
-     *
+     * @param $attributes
      * @return Gloudemans\Shoppingcart\CartCollection
+     * @internal param int $qty The quantity to add to the row
+     *
      */
     protected function updateRow($rowId, $attributes)
     {
@@ -550,6 +564,11 @@ class Cart
         return is_array(head($array));
     }
 
+    /**
+     * Retrieve the cache of Eloquent models, array of collections indexed my model class
+     *
+     * @return array
+     */
     public function cache()
     {
         return $this->cache;

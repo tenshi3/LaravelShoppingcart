@@ -44,8 +44,8 @@ class CartRowCollection extends Collection
         if ($arg == strtolower($this->associatedModel)) {
             $cache = \App::make('cart')->cache();
 
-            if (isset($cache[$this->associatedModelNamespace.'\\'.$this->associatedModel])) {
-                return $cache[$this->associatedModelNamespace.'\\'.$this->associatedModel]->find($this->id);
+            if (isset($cache[$this->getClass()])) {
+                return $cache[$this->getClass()]->find($this->id);
             } else {
                 return;
             }
@@ -74,5 +74,10 @@ class CartRowCollection extends Collection
         }
 
         return $found;
+    }
+
+    public function getClass()
+    {
+        return $this->associatedModelNamespace ? $this->associatedModelNamespace.'\\'.$this->associatedModel : $this->associatedModel;
     }
 }
