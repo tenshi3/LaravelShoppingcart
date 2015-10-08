@@ -61,6 +61,14 @@ class CartRowCollection extends Collection
 
     public function search($search, $strict = false)
     {
+        if (isset($search['model'])) {
+            if ($this->getClass() != $search['model']) {
+                return false;
+            } else {
+                unset($search['model']);
+            }
+        }
+
         foreach ($search as $key => $value) {
             if ($key === 'options') {
                 $found = $this->{$key}->search($value);

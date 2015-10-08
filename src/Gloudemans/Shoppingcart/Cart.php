@@ -49,6 +49,8 @@ class Cart
      */
     protected $cache = [];
 
+    protected $preloadModels;
+
     /**
      * Constructor.
      *
@@ -249,17 +251,7 @@ class Cart
         $cart = $this->getContent();
 
         if (!empty($cart) && empty($this->cache)) {
-            $with = config('cart.with') ?: [];
-
-            foreach ($cart->preloadModels as $type => $ids) {
-                if (count($ids) > 0) {
-                    $this->cache[$type] = $type::whereIn('id', $ids);
-                    if (isset($with[$type])) {
-                        $this->cache[$type]->with($with[$type]);
-                    }
-                    $this->cache[$type]->get();
-                }
-            }
+            $this->makeCache();
         }
 
         return (empty($cart)) ? null : $cart;
@@ -569,8 +561,58 @@ class Cart
      *
      * @return array
      */
-    public function cache()
+    public function cache($with = null)
     {
+        if (empty($this->cache)) {
+            $this->makeCache($with);
+        }
+
         return $this->cache;
     }
+
+    /**
+     * Loads objects for cache
+     */
+    protected function makeCache($extraWith = null)
+    {
+        $cart = $this->getContent();
+        $with = config('cart.with') ?: [];
+
+        if (! empty($extraWith)) {
+           foreach ($extraWith as $type => $withs) {
+               if (isset($with[$type])) {
+                   $with[$type] = array_merge($with[$type], $withs);
+               } else {
+                   $with[$type] = $withs;
+               }
+           }
+        }
+
+        foreach ($cart->preloadModels as $type => $ids) {
+            if (count($ids) > 0) {
+                $this->cache[$type] = $type::whereIn('id', $ids);
+                if (isset($with[$type])) {
+                    $this->cache[$type]->with($with[$type]);
+                }
+                $this->cache[$type] = $this->cache[$type]->get();
+
+
+            }
+        }
+    }
+
+    public function rowFromId($type, $id)
+    {
+        $cart = $this->getContent();
+        if ($cart && $cart->preloadModels[$type]) {
+            return array_search($id, $cart->preloadModels[$type]);
+        }
+        return false;
+    }
+
+    public function isEmpty()
+    {
+        return $this->count(false) === 0;
+    }
+
 }
