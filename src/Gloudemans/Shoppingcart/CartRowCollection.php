@@ -88,4 +88,15 @@ class CartRowCollection extends Collection
     {
         return $this->associatedModelNamespace ? $this->associatedModelNamespace.'\\'.$this->associatedModel : $this->associatedModel;
     }
+
+    public function toArray()
+    {
+        if ($modelData = $this->{strtolower($this->associatedModel)}) {
+            return array_merge(parent::toArray(), [
+                strtolower($this->associatedModel) => $modelData
+            ]);
+        }
+
+        return parent::toArray();
+    }
 }
