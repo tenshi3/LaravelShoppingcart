@@ -595,8 +595,6 @@ class Cart
                     $this->cache[$type]->with($with[$type]);
                 }
                 $this->cache[$type] = $this->cache[$type]->get();
-
-
             }
         }
     }
@@ -610,9 +608,31 @@ class Cart
         return false;
     }
 
+    /**
+     * If the cart is empty or not
+     * @return bool
+     */
     public function isEmpty()
     {
         return $this->count(false) === 0;
+    }
+
+    public function setOrderId($id)
+    {
+        $cart = $this->getContent();
+        $cart->orderId = $id;
+        $this->updateCart($cart);
+        return $cart->orderId;
+    }
+
+    public function getOrderId()
+    {
+        return $this->getContent()->orderId;
+    }
+
+    public function orderId($id = null)
+    {
+        return empty($id) ? $this->getOrderId() : $this->setOrderId($id);
     }
 
 }
