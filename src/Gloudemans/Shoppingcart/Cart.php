@@ -579,13 +579,13 @@ class Cart
         $with = config('cart.with') ?: [];
 
         if (! empty($extraWith)) {
-           foreach ($extraWith as $type => $withs) {
-               if (isset($with[$type])) {
-                   $with[$type] = array_merge($with[$type], $withs);
-               } else {
-                   $with[$type] = $withs;
-               }
-           }
+            foreach ($extraWith as $type => $withs) {
+                if (isset($with[$type])) {
+                    $with[$type] = array_merge($with[$type], $withs);
+                } else {
+                    $with[$type] = $withs;
+                }
+            }
         }
 
         foreach ($cart->preloadModels as $type => $ids) {
@@ -617,6 +617,10 @@ class Cart
         return $this->count(false) === 0;
     }
 
+    /**
+     * @param $id
+     * @return mixed
+     */
     public function setOrderId($id)
     {
         $cart = $this->getContent();
@@ -625,14 +629,44 @@ class Cart
         return $cart->orderId;
     }
 
+    /**
+     * @return mixed
+     */
     public function getOrderId()
     {
         return $this->getContent()->orderId;
     }
 
+    /**
+     * @param null $id
+     * @return mixed
+     */
     public function orderId($id = null)
     {
         return empty($id) ? $this->getOrderId() : $this->setOrderId($id);
+    }
+
+    public function options($key = null, $value = null)
+    {
+        $cart = $this->getContent();
+
+        if (is_array($key)) {
+            if ($value === true) {
+                $cart->options = array_merge($this->options, $key);
+            } else {
+                $cart->options = $key;
+            }
+            $this->updateCart($cart);
+            return $cart->options;
+        } else if(empty($key)) {
+            return $cart->options;
+        } else if(empty($value)) {
+            return isset($cart->options[$key]) ? $cart->options[$key] : null;
+        } else {
+            $cart->options[$key] = $value;
+            $this->updateCart($cart);
+            return $value;
+        }
     }
 
 }

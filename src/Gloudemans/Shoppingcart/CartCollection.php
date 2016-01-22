@@ -9,4 +9,6 @@ class CartCollection extends Collection
     public $preloadModels = [];
 
     public $orderId = null;
+
+    public $options = [];
 }
