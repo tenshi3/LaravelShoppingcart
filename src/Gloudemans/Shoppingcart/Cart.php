@@ -124,15 +124,17 @@ class Cart
                 // Fire the cart.batch event
                 $this->event->fire('cart.batch', $id);
 
+                $ids = [];
+
                 foreach ($id as $item) {
                     $options = array_get($item, 'options', []);
-                    $this->addRow($item['id'], $item['name'], $item['qty'], $item['price'], $options);
+                    $ids[] = $this->addRow($item['id'], $item['name'], $item['qty'], $item['price'], $options);
                 }
 
                 // Fire the cart.batched event
                 $this->event->fire('cart.batched', $id);
 
-                return;
+                return $ids;
             }
 
             $options = array_get($id, 'options', []);
@@ -382,7 +384,9 @@ class Cart
             $cart = $this->createRow($rowId, $id, $name, $qty, $price, $options);
         }
 
-        return $this->updateCart($cart);
+        $this->updateCart($cart);
+
+        return $rowId;
     }
 
     /**
@@ -498,7 +502,7 @@ class Cart
             'id' => $id,
             'name' => $name,
             'qty' => $qty,
-            'price' => $price,
+            'price' => $price * 1.0,
             'options' => new CartRowOptionsCollection($options),
             'subtotal' => $qty * $price,
         ], $this->associatedModel, $this->associatedModelNamespace);
@@ -658,9 +662,9 @@ class Cart
             }
             $this->updateCart($cart);
             return $cart->options;
-        } else if(empty($key)) {
+        } else if(is_null($key)) {
             return $cart->options;
-        } else if(empty($value)) {
+        } else if(is_null($value)) {
             return isset($cart->options[$key]) ? $cart->options[$key] : null;
         } else {
             $cart->options[$key] = $value;
@@ -669,4 +673,11 @@ class Cart
         }
     }
 
+    public function setOption($key, $value = null)
+    {
+        $cart = $this->getContent();
+        $cart->options[$key] = $value;
+        $this->updateCart($cart);
+        return $value;
+    }
 }
