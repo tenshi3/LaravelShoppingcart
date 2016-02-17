@@ -41,7 +41,7 @@ class CartRowCollection extends Collection
             return $this->get($arg);
         }
 
-        if ($arg == strtolower($this->associatedModel)) {
+        if (strtolower($arg) == strtolower($this->associatedModel)) {
             $cache = \App::make('cart')->cache();
 
             if (isset($cache[$this->getClass()])) {
@@ -56,7 +56,7 @@ class CartRowCollection extends Collection
 
     public function __isset($arg)
     {
-        return $this->has($arg) || $arg == strtolower($this->associatedModel);
+        return $this->has($arg) || strtolower($arg) == strtolower($this->associatedModel);
     }
 
     public function search($search, $strict = false)
