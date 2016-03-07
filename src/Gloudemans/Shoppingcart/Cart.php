@@ -593,6 +593,7 @@ class Cart
         }
 
         foreach ($cart->preloadModels as $type => $ids) {
+            $ids = array_unique($ids);
             if (count($ids) > 0) {
                 $this->cache[$type] = $type::whereIn('id', $ids);
                 if (isset($with[$type])) {
