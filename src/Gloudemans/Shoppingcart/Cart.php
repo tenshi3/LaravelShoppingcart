@@ -681,4 +681,12 @@ class Cart
         $this->updateCart($cart);
         return $value;
     }
+
+    public function removeOption($key)
+    {
+        $cart = $this->getContent();
+        unset($cart->options[$key]);
+        $this->updateCart($cart);
+        return true;
+    }
 }
